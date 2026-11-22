@@ -1,5 +1,5 @@
 // Subir el número en cada cambio de la app para que el celular tome la versión nueva.
-const CACHE = 'planos-v1';
+const CACHE = 'planos-v2';
 const ARCHIVOS = ['./', 'index.html', 'manifest.json', 'icono-192.png', 'icono-512.png'];
 
 self.addEventListener('install', e => {
@@ -9,11 +9,12 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
-      .then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(ks => Promise.all(ks.filter(k => k.startsWith('planos-v') && k !== CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
 
+// Solo borra versiones viejas de esta app: las demás apps comparten handeress.github.io.
 // Primero lo guardado (funciona sin señal) y, si hay internet, actualiza por detrás.
 self.addEventListener('fetch', e => {
   const req = e.request;
