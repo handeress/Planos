@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1d1b18">
+<title>Planos</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icono-192.png">
+<style>
+:root{--papel:#f4f1ea;--hoja:#fffdf8;--tinta:#1d1b18;--gris:#6b655b;--linea:#d9d3c7;--acento:#c2410c;--ok:#15803d;--amb:#a16207;--rojo:#b91c1c}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--papel);color:var(--tinta);-webkit-tap-highlight-color:transparent}
+button,input{font:inherit;color:inherit}button{cursor:pointer}
+header{position:sticky;top:0;z-index:5;background:var(--tinta);color:#fff;padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top));display:flex;gap:10px;align-items:center;border-bottom:6px solid var(--acento)}
+header h1{font-size:17px;margin:0;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header button{background:none;border:0;color:#fff;font-size:22px;padding:4px 8px;min-height:40px}
+main{padding:12px 12px 40px;max-width:900px;margin:0 auto}
+.estado{font-size:13px;color:var(--gris);margin:0 2px 10px}.estado.err{color:var(--rojo)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.chip{background:var(--hoja);border:1px solid var(--linea);border-radius:999px;padding:8px 14px;min-height:40px;font-weight:600}
+.chip.on{background:var(--tinta);color:#fff;border-color:var(--tinta)}
+.buscar{width:100%;background:var(--hoja);border:1px solid var(--linea);border-radius:10px;padding:10px 12px;min-height:44px;margin-bottom:6px}
+h2.g{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--acento);margin:16px 2px 6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.card{background:var(--hoja);border:1px solid var(--linea);border-radius:12px;overflow:hidden;text-align:left;padding:0;display:flex;flex-direction:column}
+.card .mini{width:100%;aspect-ratio:11/8.5;background:#ebe6dc;object-fit:cover;display:block}
+.card .t{font-weight:700;font-size:14px;padding:7px 9px 0}
+.card .s{font-size:12px;color:var(--gris);padding:2px 9px 8px}
+.est{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:1px 7px;margin-right:4px}
+.est.aprobado{background:#dcfce7;color:var(--ok)}.est.borrador{background:#fef3c7;color:var(--amb)}.est.vigente{background:#e7e5e4;color:var(--gris)}
+.m3{display:flex;gap:8px;flex-wrap:wrap}
+.m3 button{background:var(--hoja);border:1px solid var(--linea);border-radius:12px;padding:10px 12px;min-height:46px;font-weight:600}
+.hoja{background:var(--hoja);border:1px solid var(--linea);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.hoja .t{font-size:14px;font-weight:600;padding:8px 12px;border-bottom:1px solid var(--linea);display:flex;justify-content:space-between}
+.hoja img{display:block;width:100%;height:auto;min-height:120px;background:#f0ece4}
+.btn{background:var(--tinta);color:#fff;border:0;border-radius:10px;padding:10px 14px;min-height:44px;font-weight:600}
+.btn.sec{background:var(--hoja);color:var(--tinta);border:1px solid var(--linea)}
+.fila{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}
+a.btn{text-decoration:none;display:inline-flex;align-items:center}
+.arch{background:var(--hoja);border:1px solid var(--linea);border-radius:10px;padding:10px 12px;margin-bottom:6px;font-size:14px}
+.arch .s{font-size:12px;color:var(--gris)}
+.nota{background:#fef3c7;border:1px solid #f1d58a;border-radius:10px;padding:10px 12px;font-size:14px;margin-bottom:10px}
+.visor{width:100%;height:calc(100vh - 150px);border:1px solid var(--linea);border-radius:12px;background:#fff}
+#zoom{position:fixed;inset:0;z-index:20;background:#fff;overflow:auto;display:none;touch-action:pan-x pan-y pinch-zoom}
+#zoom img{display:block;width:260%;max-width:none}
+#zoom .cerrar{position:fixed;top:calc(10px + env(safe-area-inset-top));right:10px;z-index:21;background:var(--tinta);color:#fff;border:0;border-radius:999px;width:46px;height:46px;font-size:22px}
+#zoom .tam{position:fixed;bottom:calc(14px + env(safe-area-inset-bottom));right:10px;z-index:21;display:flex;gap:6px}
+#zoom .tam button{background:var(--tinta);color:#fff;border:0;border-radius:10px;min-width:46px;height:46px;font-size:18px}
+#zoom .cargando{position:fixed;bottom:calc(14px + env(safe-area-inset-bottom));left:10px;z-index:21;background:var(--tinta);color:#fff;border-radius:10px;padding:8px 12px;font-size:13px}
+label.et{display:block;font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--gris);margin:16px 2px 5px}
+input.campo{width:100%;background:var(--hoja);border:1px solid var(--linea);border-radius:10px;padding:11px 12px;min-height:46px}
+.vacio{text-align:center;color:var(--gris);padding:30px 16px}
+#toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:var(--tinta);color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:30}
+#toast.on{opacity:1}
+</style>
+</head>
+<body>
+<header><button id="atras" hidden>‹</button><h1 id="titulo">Planos</h1><button id="aj" title="Ajustes">⚙</button></header>
+<main id="main"></main>
+<div id="zoom"><button class="cerrar" id="zc">✕</button><img id="zi" alt=""><div class="cargando" id="zl" hidden>Cargando nítido…</div><div class="tam"><button id="zm">−</button><button id="zp">+</button></div></div>
+<div id="toast"></div>
+<script>
+'use strict';
+const VERSION='1.0';
+const GH={dueno:'handeress',repo:'Bitacora-datos',carpeta:'planos'};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const S={vista:'inicio',proy:localStorage.getItem('pl_proy')||'',tema:null,modelo:null,q:'',verArch:false};
+let token='',ind=null,estado='',urls={};
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2400);}
+function llaveBitacora(){return new Promise(res=>{try{const r=indexedDB.open('bitacora');
+  r.onupgradeneeded=()=>{try{r.transaction.abort();}catch(e){} res('');};r.onerror=()=>res('');
+  r.onsuccess=()=>{const db=r.result;try{if(!db.objectStoreNames.contains('meta')){db.close();return res('');}
+    const g=db.transaction('meta').objectStore('meta').get('token');g.onsuccess=()=>{db.close();res((g.result&&g.result.v)||'');};g.onerror=()=>{db.close();res('');};}catch(e){db.close();res('');}};
+  }catch(e){res('');}});}
+
+/* Archivos: primero lo guardado en el aparato; la red solo si no está o si se pide refrescar. */
+async function cacheDe(){try{return await caches.open('planos-datos');}catch(e){return null;}}
+async function red(ruta){const r=await fetch('https://api.github.com/repos/'+GH.dueno+'/'+GH.repo+'/contents/'+ruta.split('/').map(encodeURIComponent).join('/'),
+  {cache:'no-store',headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github.raw+json','X-GitHub-Api-Version':'2022-11-28'}});
+  if(!r.ok){if(r.status===401)throw new Error('La llave no sirve o venció.');throw new Error('No se pudo traer '+ruta+' ('+r.status+').');} return r.blob();}
+async function archivo(ruta,v,{refrescar=false}={}){const k='https://datos.local/'+ruta+'?v='+(v||'');const c=await cacheDe();
+  if(c&&!refrescar){const g=await c.match(k);if(g)return g.blob();}
+  if(!token||!navigator.onLine){ if(c){const g=await c.match(k);if(g)return g.blob();} throw new Error('sin señal'); }
+  const b=await red(ruta); if(c)await c.put(k,new Response(b)); return b;}
+async function url(ruta,v){const k=ruta+'?'+v;if(urls[k])return urls[k];urls[k]=URL.createObjectURL(await archivo(ruta,v));return urls[k];}
+
+async function cargarIndice(refrescar){
+  try{const c=await cacheDe();const k='https://datos.local/planos/indice.json';
+    if(!refrescar&&c){const g=await c.match(k);if(g&&!ind){ind=JSON.parse(await (await g.blob()).text());pintar();}}
+    if(token&&navigator.onLine){const b=await red(GH.carpeta+'/indice.json');if(c)await c.put(k,new Response(b));ind=JSON.parse(await b.text());estado='Al día · '+new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});}
+    else estado=token?'Sin señal: se muestra lo guardado.':'Sin llave. Abre la Bitácora una vez en este navegador o pega la llave en Ajustes.';
+  }catch(e){estado=e.message||'No se pudo actualizar.';}
+  pintar();
+}
+function proyecto(){if(!ind)return null;let p=ind.proyectos.find(x=>x.id===S.proy);if(!p){p=ind.proyectos[0];S.proy=p.id;}return p;}
+function badge(e){return e?`<span class="est ${esc(e)}">${e==='aprobado'?'Aprobado':e==='borrador'?'Borrador':'Vigente'}</span>`:'';}
+function fecha(f){if(!f)return'';const[a,m,d]=f.split('-');return d+'/'+m+'/'+a;}
+
+function pintar(){
+  $('#atras').hidden=S.vista==='inicio';
+  if(S.vista==='ajustes')return pintarAjustes();
+  const p=proyecto(); if(!p){$('#main').innerHTML=`<div class="estado" id="est">${esc(estado||'Cargando…')}</div>`;return;}
+  if(S.vista==='tema'){const t=p.temas.find(x=>x.id===S.tema)||(p.archivo||[]).find(x=>x._id===S.tema);if(t)return pintarTema(p,t);S.vista='inicio';}
+  if(S.vista==='3d'){const m=(p.modelos||[]).find(x=>x.id===S.modelo);if(m)return pintar3d(m);S.vista='inicio';}
+  $('#titulo').textContent='Planos';
+  const q=S.q.trim().toLowerCase();
+  const temas=p.temas.filter(t=>!q||(t.titulo+' '+t.grupo+' '+t.hojas.map(h=>h.titulo).join(' ')).toLowerCase().includes(q));
+  const grupos={};for(const t of temas)(grupos[t.grupo||'Otros']=grupos[t.grupo||'Otros']||[]).push(t);
+  let h=`<div class="estado" id="est">${esc(estado)}</div><div class="chips">${ind.proyectos.map(x=>`<button class="chip${x.id===p.id?' on':''}" data-p="${esc(x.id)}">${esc(x.nombre)}</button>`).join('')}</div>`;
+  if(p.nota)h+=`<div class="nota">${esc(p.nota)}</div>`;
+  if((p.modelos||[]).length)h+=`<h2 class="g">3D</h2><div class="m3">${p.modelos.map(m=>`<button data-m="${esc(m.id)}">🧊 ${esc(m.titulo)}</button>`).join('')}</div>`;
+  if(p.temas.length)h+=`<h2 class="g">Buscar</h2><input class="buscar" id="q" type="search" placeholder="Plano, hoja o grupo (ej. A104, tanques)" value="${esc(S.q)}">`;
+  for(const[g,ts]of Object.entries(grupos)){h+=`<h2 class="g">${esc(g)}</h2><div class="grid">`+ts.map(t=>`<button class="card" data-t="${esc(t.id)}"><img class="mini" data-mini="${esc(t.hojas[0]?t.hojas[0].lo:'')}" data-v="${esc(t.fecha)}" alt=""><div class="t">${esc(t.titulo)}</div><div class="s">${badge(t.estado)}${fecha(t.fecha)} · ${t.hojas.length} ${t.hojas.length===1?'hoja':'hojas'}</div></button>`).join('')+`</div>`;}
+  if(p.temas.length&&!temas.length)h+='<div class="vacio">Nada con esa búsqueda.</div>';
+  if((p.archivo||[]).length)h+=S.verArch?`<h2 class="g">Archivo (revisiones reemplazadas)</h2>`+p.archivo.map((a,i)=>`<div class="arch">${a.hojas&&a.hojas.length?`<button class="btn sec" style="float:right" data-a="${i}">Ver</button>`:''}<b>${esc(a.titulo)}</b> ${badge(a.estado)}<div class="s">${fecha(a.fecha)} · ${esc(a.motivo||'')}</div>${a.drive?`<a class="s" href="${esc(a.drive)}" target="_blank" rel="noopener">PDF en Drive</a>`:''}</div>`).join('')
+    :`<div class="fila"><button class="btn sec" id="verArch">Archivo (${p.archivo.length})</button></div>`;
+  if(p.temas.length)h+=`<div class="fila"><button class="btn" id="bajar">Guardar ${esc(p.nombre)} para usar sin señal</button></div>`;
+  $('#main').innerHTML=h;
+  const m=$('#main');
+  m.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{S.proy=b.dataset.p;localStorage.setItem('pl_proy',S.proy);S.verArch=false;pintar();});
+  m.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{S.vista='tema';S.tema=b.dataset.t;scrollTo(0,0);pintar();});
+  m.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{S.vista='3d';S.modelo=b.dataset.m;pintar();});
+  m.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{const a=p.archivo[+b.dataset.a];a._id='arch-'+b.dataset.a;S.vista='tema';S.tema=a._id;scrollTo(0,0);pintar();});
+  const va=$('#verArch');if(va)va.onclick=()=>{S.verArch=true;pintar();};
+  const bj=$('#bajar');if(bj)bj.onclick=()=>bajarTodo(p,bj);
+  const qi=$('#q');if(qi)qi.oninput=()=>{S.q=qi.value;clearTimeout(qi._t);qi._t=setTimeout(()=>{pintar();const n=$('#q');n.focus();n.setSelectionRange(n.value.length,n.value.length);},300);};
+  // miniaturas: livianas, de a una para no ahogar la señal
+  (async()=>{for(const img of m.querySelectorAll('[data-mini]')){if(!img.dataset.mini)continue;try{img.src=await url(img.dataset.mini,img.dataset.v);}catch(e){}}})();
+}
+function pintarTema(p,t){
+  $('#titulo').textContent=t.titulo;
+  let h=`<div class="fila">${badge(t.estado)}<span class="estado">${fecha(t.fecha)} · ${esc(p.nombre)}</span></div>`;
+  if(t.motivo)h+=`<div class="nota">Archivado: ${esc(t.motivo)}</div>`;
+  h+=t.hojas.map((x,i)=>`<div class="hoja"><div class="t"><span>${esc(x.titulo)}</span><span class="estado" style="margin:0">toca para ampliar</span></div><img data-i="${i}" alt="${esc(x.titulo)}"></div>`).join('');
+  if(t.drive)h+=`<div class="fila"><a class="btn sec" href="${esc(t.drive)}" target="_blank" rel="noopener">PDF en Drive</a></div>`;
+  $('#main').innerHTML=h;
+  $('#main').querySelectorAll('[data-i]').forEach(async img=>{const x=t.hojas[+img.dataset.i];
+    try{img.src=await url(x.lo,t.fecha);}catch(e){img.alt='Sin señal y sin guardar';}
+    img.onclick=()=>zoom(x,t.fecha);});
+}
+function pintar3d(m){$('#titulo').textContent=m.titulo;
+  $('#main').innerHTML=`<div class="fila"><button class="btn sec" id="full">Pantalla completa</button><span class="estado" id="e3">Cargando 3D…</span></div><iframe class="visor" id="vis" title="3D"></iframe>`;
+  (async()=>{try{const b=await archivo(m.visor,m.fecha);const f=$('#vis');f.srcdoc=await b.text();$('#e3').textContent='';
+    $('#full').onclick=()=>{f.requestFullscreen?f.requestFullscreen():f.webkitRequestFullscreen&&f.webkitRequestFullscreen();};}
+    catch(e){$('#e3').textContent='No se pudo cargar el 3D (sin señal y sin guardar).';}})();}
+let zw=260;
+async function zoom(x,v){const zi=$('#zi');$('#zoom').style.display='block';zw=260;zi.style.width=zw+'%';
+  try{zi.src=await url(x.lo,v);}catch(e){}
+  $('#zl').hidden=false; try{zi.src=await url(x.hi,v);}catch(e){toast('Sin señal: se ve la versión liviana');} $('#zl').hidden=true;}
+$('#zc').onclick=()=>{$('#zoom').style.display='none';};
+$('#zp').onclick=()=>{zw=Math.min(700,zw+80);$('#zi').style.width=zw+'%';};
+$('#zm').onclick=()=>{zw=Math.max(100,zw-80);$('#zi').style.width=zw+'%';};
+async function bajarTodo(p,btn){if(!token||!navigator.onLine)return toast('Necesitas señal para guardar');
+  const lista=[];for(const t of p.temas)for(const x of t.hojas){lista.push([x.lo,t.fecha],[x.hi,t.fecha]);}for(const m of p.modelos||[])lista.push([m.visor,m.fecha]);
+  let n=0;btn.disabled=true;for(const[r,v]of lista){try{await archivo(r,v);}catch(e){}n++;btn.textContent='Guardando… '+n+' de '+lista.length;}
+  btn.disabled=false;btn.textContent='Listo: '+p.nombre+' guardado para usar sin señal';}
+function pintarAjustes(){$('#titulo').textContent='Ajustes';
+  $('#main').innerHTML=`<div class="estado" id="est">${esc(estado)}</div><div class="nota">Usa la llave de la Bitácora si ya la abriste en este navegador. Si no, pega aquí la llave "Bitacora celular".</div>
+  <label class="et">Llave de GitHub</label><input class="campo" id="tok" type="password" placeholder="${token?'Hay una llave guardada':'github_pat_…'}">
+  <div class="fila"><button class="btn" id="bTok">Guardar llave</button><button class="btn sec" id="bBit">Usar la de la Bitácora</button></div>
+  <div class="fila"><button class="btn sec" id="bSync">Buscar planos nuevos</button><button class="btn sec" id="bBorrar">Borrar lo guardado</button></div><p class="estado">Versión ${VERSION} · datos en ${GH.repo}/${GH.carpeta}</p>`;
+  $('#bTok').onclick=()=>{const v=$('#tok').value.trim();if(!v)return toast('Pega primero la llave');token=v;localStorage.setItem('pl_token',v);toast('Llave guardada');cargarIndice(true);};
+  $('#bBit').onclick=async()=>{const v=await llaveBitacora();if(!v)return toast('No encontré la llave de la Bitácora en este navegador');token=v;localStorage.setItem('pl_token',v);toast('Llave de la Bitácora lista');cargarIndice(true);};
+  $('#bSync').onclick=()=>cargarIndice(true);
+  $('#bBorrar').onclick=async()=>{if(!confirm('¿Borrar los planos guardados en este aparato? Se vuelven a bajar con señal.'))return;try{await caches.delete('planos-datos');}catch(e){}urls={};toast('Borrado');};}
+$('#atras').onclick=()=>{S.vista='inicio';pintar();};
+$('#aj').onclick=()=>{S.vista='ajustes';pintar();};
+addEventListener('online',()=>cargarIndice(true));
+(async function(){
+  token=localStorage.getItem('pl_token')||'';if(!token){token=await llaveBitacora();if(token)localStorage.setItem('pl_token',token);}
+  pintar(); cargarIndice(false);
+  if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+})();
+</script>
+</body>
+</html>
