@@ -65,11 +65,19 @@ input.campo{width:100%;background:var(--hoja);border:1px solid var(--linea);bord
 <div id="toast"></div>
 <script>
 'use strict';
-const VERSION='1.2';
+const VERSION='1.3';
 const GH={dueno:'handeress',repo:'Bitacora-datos',carpeta:'planos'};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const S={vista:'inicio',proy:localStorage.getItem('pl_proy')||'',tema:null,modelo:null,q:'',verArch:false};
+// 3D: la app le agrega al visor el código que guarda la vista y lo recarga si el celular lo borró.
+const VISOR_JS="/* Agregado por la app: recuerda la vista del 3D y lo recarga solo si el celular lo borr\u00f3 al cambiar de app. */\n(function(){\n  var K='visor3d:'+(window.__VK||location.pathname);\n  var cv=document.querySelector('canvas'), perdido=false;\n  if(cv)cv.addEventListener('webglcontextlost',function(){perdido=true;});\n  function glPerdido(){try{var g=cv&&(cv.getContext('webgl')||cv.getContext('experimental-webgl'));return perdido||(g&&g.isContextLost&&g.isContextLost());}catch(e){return perdido;}}\n  var V=window.__V||null,ok=!!(V&&V.cam&&V.state&&V.PARTS);\n  var cam=ok?V.cam:null,state=ok?V.state:null,PARTS=ok?V.PARTS:[],MOVS=ok?V.MOVS:[];\n  function leer(){if(!ok)return null;var M=MOVS||[];\n    return {cam:{t:cam.t.slice(),r:cam.r,yaw:cam.yaw,pitch:cam.pitch},f:state.f,clip:state.clip,cx:state.cx,ex:state.exT,\n      open:M.map(function(g){return g.oT;}),hid:PARTS.map(function(p){return p.hidden?1:0;}).join(''),vis:PARTS.map(function(p){return p.vis===false?0:1;}).join(''),t:Date.now()};}\n  var ult='';\n  function guardar(){var s=leer();if(!s)return;var j=JSON.stringify(Object.assign({},s,{t:0}));if(j===ult)return;ult=j;try{localStorage.setItem(K,JSON.stringify(s));}catch(e){}}\n  function poner(){var s;try{s=JSON.parse(localStorage.getItem(K)||'null');}catch(e){}\n    if(!s||!ok)return;\n    try{if(s.hid&&s.hid.length===PARTS.length)PARTS.forEach(function(p,i){p.hidden=s.hid[i]==='1';});}catch(e){}\n    try{if(s.vis&&s.vis.length===PARTS.length)PARTS.forEach(function(p,i){p.vis=s.vis[i]==='1';});}catch(e){}\n    try{if(s.f&&V.filtrar)V.filtrar(s.f);}catch(e){}\n    try{if(s.open&&s.open.length===MOVS.length&&MOVS.length){MOVS.forEach(function(g,i){g.oT=s.open[i];g.o=s.open[i];});if(V.syncOpen)V.syncOpen();}}catch(e){}\n    try{state.cx=s.cx||0;var cx=document.getElementById('cutX');if(cx)cx.value=state.cx;if(V.setClip)V.setClip(!!s.clip);}catch(e){}\n    try{state.exT=state.ex=s.ex||0;var ex=document.getElementById('exp');if(ex)ex.value=state.exT;}catch(e){}\n    try{if(s.cam){cam.t=s.cam.t;cam.r=s.cam.r;cam.yaw=s.cam.yaw;cam.pitch=s.cam.pitch;}if(V.markView)V.markView('');}catch(e){}\n    try{if(V.refresh)V.refresh();if(V.req)V.req();}catch(e){}\n    ult=JSON.stringify(Object.assign({},leer(),{t:0}));}\n  poner();\n  if(ok)setInterval(guardar,1000);\n  document.addEventListener('visibilitychange',function(){if(document.hidden){guardar();}else if(glPerdido()){guardar();location.reload();}});\n  window.addEventListener('pagehide',guardar);\n  window.addEventListener('pageshow',function(){if(glPerdido())location.reload();});\n})();\n",VISOR_EXP=";try{window.__V={cam:cam,state:state,PARTS:PARTS,MOVS:(typeof MOVS!=='undefined'?MOVS:[]),filtrar:(typeof filtrar==='function'?filtrar:null),syncOpen:(typeof syncOpen==='function'?syncOpen:null),setClip:(typeof setClip==='function'?setClip:null),markView:(typeof markView==='function'?markView:null),refresh:(typeof refresh==='function'?refresh:null),req:(typeof req==='function'?req:null)};}catch(e){}\n";
+function conGuardado(html,clave){let h=html;const a=h.indexOf('const cam=');if(a>=0){const fin=h.indexOf('</script',a),j=h.lastIndexOf('})();',fin);if(j>a)h=h.slice(0,j)+VISOR_EXP+h.slice(j);}const t='<script>window.__VK='+JSON.stringify(clave)+';'+VISOR_JS.replace(/<\/script/gi,'<\\/script')+'<\/script>';const i=h.toLowerCase().lastIndexOf('</body>');return i>=0?h.slice(0,i)+t+h.slice(i):h+t;}
+// Recuerda dónde estabas (elemento y pestaña) para volver ahí al recargar o reabrir la app (hasta 12 h).
+const LUGAR_K='pl_lugar',LUGAR_C=["vista", "proy", "tema", "modelo"];
+function guardarLugar(){try{const o={t:Date.now()};LUGAR_C.forEach(k=>o[k]=S[k]);localStorage.setItem(LUGAR_K,JSON.stringify(o));}catch(e){}}
+(function(){try{const o=JSON.parse(localStorage.getItem(LUGAR_K)||'null');if(o&&Date.now()-o.t<12*3600e3&&o.vista!=='ajustes')LUGAR_C.forEach(k=>{if(o[k]!=null)S[k]=o[k];});}catch(e){}})();
+
 let token='',ind=null,estado='',urls={};
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2400);}
 function llaveBitacora(){return new Promise(res=>{try{const r=indexedDB.open('bitacora');
@@ -103,7 +111,7 @@ function fecha(f){if(!f)return'';const[a,m,d]=f.split('-');return d+'/'+m+'/'+a;
 
 // Atrás: subpágina → página inicial del elemento → inicio de la app → cierra la app.
 function nivel(){return S.vista==='inicio'?0:1;}
-function syncHist(){const L=nivel(),n=(history.state&&history.state.n)||0;if(L>n){for(let i=n+1;i<=L;i++)history.pushState({n:i},'');}else if(L===n)history.replaceState({n:L},'');else history.go(L-n);}
+function syncHist(){guardarLugar();const L=nivel(),n=(history.state&&history.state.n)||0;if(L>n){for(let i=n+1;i<=L;i++)history.pushState({n:i},'');}else if(L===n)history.replaceState({n:L},'');else history.go(L-n);}
 window.addEventListener('popstate',e=>{const z=$('#zoom');if(z&&z.style.display==='block'){z.style.display='none';return;}const n=(e.state&&e.state.n)||0;if(n===0)S.vista='inicio';scrollTo(0,0);pintar();});
 function pintar(){syncHist();
   $('#atras').hidden=S.vista==='inicio';
@@ -149,7 +157,7 @@ function pintarTema(p,t){
 }
 function pintar3d(m){$('#titulo').textContent=m.titulo;
   $('#main').innerHTML=`<div class="fila"><button class="btn sec" id="full">Pantalla completa</button><span class="estado" id="e3">Cargando 3D…</span></div><iframe class="visor" id="vis" title="3D"></iframe>`;
-  (async()=>{try{const b=await archivo(m.visor,m.fecha);const f=$('#vis');f.srcdoc=await b.text();$('#e3').textContent='';
+  (async()=>{try{const b=await archivo(m.visor,m.fecha);const f=$('#vis');f.srcdoc=conGuardado(await b.text(),'planos:'+m.id);$('#e3').textContent='';
     $('#full').onclick=()=>{f.requestFullscreen?f.requestFullscreen():f.webkitRequestFullscreen&&f.webkitRequestFullscreen();};}
     catch(e){$('#e3').textContent='No se pudo cargar el 3D (sin señal y sin guardar).';}})();}
 let zw=260;

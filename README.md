@@ -22,3 +22,5 @@ App para ver rápido, aun con mala señal, el plano vigente de cada tema de las 
 - 1.0 (22/11/2026): Suesca (17 temas, 3 modelos 3D y archivo). Silvania pendiente de planos en Drive.
 
 - 1.2 (23-nov-2026): botón Instalar en el celular; atrás va de subpágina a la página inicial del elemento, luego al inicio y luego cierra la app.
+
+- 1.3 (23-nov-2026): recuerda el elemento y la pestaña al recargar (12 h); el 3D guarda su vista (cámara, filtros, corte, separación, abierto) y se recarga solo si el celular lo borra al cambiar de app.
