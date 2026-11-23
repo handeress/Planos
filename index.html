@@ -65,7 +65,7 @@ input.campo{width:100%;background:var(--hoja);border:1px solid var(--linea);bord
 <div id="toast"></div>
 <script>
 'use strict';
-const VERSION='1.1';
+const VERSION='1.2';
 const GH={dueno:'handeress',repo:'Bitacora-datos',carpeta:'planos'};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -101,7 +101,11 @@ function proyecto(){if(!ind)return null;let p=ind.proyectos.find(x=>x.id===S.pro
 function badge(e){return e?`<span class="est ${esc(e)}">${e==='aprobado'?'Aprobado':e==='borrador'?'Borrador':'Vigente'}</span>`:'';}
 function fecha(f){if(!f)return'';const[a,m,d]=f.split('-');return d+'/'+m+'/'+a;}
 
-function pintar(){
+// Atrás: subpágina → página inicial del elemento → inicio de la app → cierra la app.
+function nivel(){return S.vista==='inicio'?0:1;}
+function syncHist(){const L=nivel(),n=(history.state&&history.state.n)||0;if(L>n){for(let i=n+1;i<=L;i++)history.pushState({n:i},'');}else if(L===n)history.replaceState({n:L},'');else history.go(L-n);}
+window.addEventListener('popstate',e=>{const z=$('#zoom');if(z&&z.style.display==='block'){z.style.display='none';return;}const n=(e.state&&e.state.n)||0;if(n===0)S.vista='inicio';scrollTo(0,0);pintar();});
+function pintar(){syncHist();
   $('#atras').hidden=S.vista==='inicio';
   if(S.vista==='ajustes')return pintarAjustes();
   const p=proyecto(); if(!p){$('#main').innerHTML=`<div class="estado" id="est">${esc(estado||'Cargando…')}</div>`;return;}
@@ -152,7 +156,9 @@ let zw=260;
 async function zoom(x,v){const zi=$('#zi');$('#zoom').style.display='block';zw=260;zi.style.width=zw+'%';
   try{zi.src=await url(x.lo,v);}catch(e){}
   $('#zl').hidden=false; try{zi.src=await url(x.hi,v);}catch(e){toast('Sin señal: se ve la versión liviana');} $('#zl').hidden=true;}
-$('#zc').onclick=()=>{$('#zoom').style.display='none';};
+$('#zc').onclick=()=>history.back();
+// La imagen ampliada cuenta como un paso más: atrás la cierra.
+new MutationObserver(()=>{const z=$('#zoom');if(z.style.display==='block'&&!(history.state&&history.state.zoom))history.pushState({n:((history.state&&history.state.n)||0)+1,zoom:1},'');}).observe($('#zoom'),{attributes:true,attributeFilter:['style']});
 $('#zp').onclick=()=>{zw=Math.min(700,zw+80);$('#zi').style.width=zw+'%';};
 $('#zm').onclick=()=>{zw=Math.max(100,zw-80);$('#zi').style.width=zw+'%';};
 async function bajarTodo(p,btn){if(!token||!navigator.onLine)return toast('Necesitas señal para guardar');
@@ -168,7 +174,7 @@ function pintarAjustes(){$('#titulo').textContent='Ajustes';
   $('#bBit').onclick=async()=>{const v=await llaveBitacora();if(!v)return toast('No encontré la llave de la Bitácora en este navegador');token=v;localStorage.setItem('pl_token',v);toast('Llave de la Bitácora lista');cargarIndice(true);};
   $('#bSync').onclick=()=>cargarIndice(true);
   $('#bBorrar').onclick=async()=>{if(!confirm('¿Borrar los planos guardados en este aparato? Se vuelven a bajar con señal.'))return;try{await caches.delete('planos-datos');}catch(e){}urls={};toast('Borrado');};}
-$('#atras').onclick=()=>{S.vista='inicio';pintar();};
+$('#atras').onclick=()=>history.back();
 $('#aj').onclick=()=>{S.vista='ajustes';pintar();};
 addEventListener('online',()=>cargarIndice(true));
 (async function(){
