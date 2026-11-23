@@ -58,12 +58,14 @@ input.campo{width:100%;background:var(--hoja);border:1px solid var(--linea);bord
 </head>
 <body>
 <header><button id="atras" hidden>‹</button><h1 id="titulo">Planos</h1><button id="aj" title="Ajustes">⚙</button></header>
+<div id="instBar" hidden style="display:none;gap:10px;align-items:center;margin:8px 12px 0;padding:10px 12px;background:#fffdf8;border:1px solid #c2410c;border-radius:10px"><span style="flex:1">Instala Planos en la pantalla del celular.</span><button class="btn" id="bInst" style="background:#c2410c">Instalar</button></div>
+<script>(function(){let ev=null;const bar=()=>document.getElementById("instBar");const ver=v=>{const b=bar();if(!b)return;b.hidden=!v;b.style.display=v?"flex":"none";};window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();ev=e;ver(true);});window.addEventListener("appinstalled",()=>{ev=null;ver(false);});document.addEventListener("click",async e=>{if(e.target&&e.target.id==="bInst"&&ev){ev.prompt();try{await ev.userChoice;}catch(_){}ev=null;ver(false);}});document.addEventListener("DOMContentLoaded",()=>ver(!!ev));})();</script>
 <main id="main"></main>
 <div id="zoom"><button class="cerrar" id="zc">✕</button><img id="zi" alt=""><div class="cargando" id="zl" hidden>Cargando nítido…</div><div class="tam"><button id="zm">−</button><button id="zp">+</button></div></div>
 <div id="toast"></div>
 <script>
 'use strict';
-const VERSION='1.0';
+const VERSION='1.1';
 const GH={dueno:'handeress',repo:'Bitacora-datos',carpeta:'planos'};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
