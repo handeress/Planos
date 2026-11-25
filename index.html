@@ -65,7 +65,7 @@ input.campo{width:100%;background:var(--hoja);border:1px solid var(--linea);bord
 <div id="toast"></div>
 <script>
 'use strict';
-const VERSION='1.3';
+const VERSION='1.4';
 const GH={dueno:'handeress',repo:'Bitacora-datos',carpeta:'planos'};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -167,8 +167,12 @@ async function zoom(x,v){const zi=$('#zi');$('#zoom').style.display='block';zw=2
 $('#zc').onclick=()=>history.back();
 // La imagen ampliada cuenta como un paso más: atrás la cierra.
 new MutationObserver(()=>{const z=$('#zoom');if(z.style.display==='block'&&!(history.state&&history.state.zoom))history.pushState({n:((history.state&&history.state.n)||0)+1,zoom:1},'');}).observe($('#zoom'),{attributes:true,attributeFilter:['style']});
-$('#zp').onclick=()=>{zw=Math.min(700,zw+80);$('#zi').style.width=zw+'%';};
-$('#zm').onclick=()=>{zw=Math.max(100,zw-80);$('#zi').style.width=zw+'%';};
+// Zoom en pasos suaves: cada + o − cambia ×1,16 (antes 80 %, ahora 4 pasos donde había 1), manteniendo el centro de lo que se ve.
+function zpaso(f){const z=$('#zoom'),zi=$('#zi');const cx=(z.scrollLeft+z.clientWidth/2)/zi.offsetWidth,cy=(z.scrollTop+z.clientHeight/2)/zi.offsetHeight;
+  zw=Math.round(Math.min(700,Math.max(100,zw*f)));zi.style.width=zw+'%';
+  z.scrollLeft=cx*zi.offsetWidth-z.clientWidth/2;z.scrollTop=cy*zi.offsetHeight-z.clientHeight/2;}
+$('#zp').onclick=()=>zpaso(1.16);
+$('#zm').onclick=()=>zpaso(1/1.16);
 async function bajarTodo(p,btn){if(!token||!navigator.onLine)return toast('Necesitas señal para guardar');
   const lista=[];for(const t of p.temas)for(const x of t.hojas){lista.push([x.lo,t.fecha],[x.hi,t.fecha]);}for(const m of p.modelos||[])lista.push([m.visor,m.fecha]);
   let n=0;btn.disabled=true;for(const[r,v]of lista){try{await archivo(r,v);}catch(e){}n++;btn.textContent='Guardando… '+n+' de '+lista.length;}
